@@ -1,19 +1,50 @@
 # ssh pr10@167.71.243.238  conectarse al servidor
 from BrockerConf import*
-# Cambiar loggin format a .INFO
-
-broker=Cliente()    # Creamos la instancia brocker del tipo cliente
+#
+#
+#       CAMBIAR NIVEL DEL LOGGIN A INFO
+#
+"""
+def sendALIVE(recibido=False, retain = False):              # EAMA Funcion para publicar ALIVE
+    i = 0                                                   # EAMA Control de pulsos enviados
+    send=True
+    aux = 0                                                 # EAMA Contador de segundos transcurridos
+    while send:
+        topic='comandos/'+str(Grupo)+'/'+self.Documento(USUARIO)[0]  # EAMA topic para enviar Alive
+        val=ALIVE+b'$'+self.Documento(USUARIO)[0].encode("utf-8")       # EAMA Concatena caracteres en binario
+        client.publish(topic, val, QoS, retain)             # EAMA Publica el Alive en el topic indicado
+        logging.debug("Alive Enviado. "+str(i))             # EAMA Indica en pantalla que se envio el Alive
+        print(aux)
+        if(recibido==True):                                 # EAMA si recibe un Ack
+            time.sleep(ALIVE_PERIOD)                        # EAMA Delay normal de 2 segundos
+            i=0                                             # Reinicia el contador de "pulsos"
+        elif (i<3):                                         # EAMA Cuenta 3 periodos de Alive si no recibe ack
+            time.sleep(ALIVE_PERIOD)                        # EAMA Delay normal de 2 segundos
+            i+=1                                            # EAMA aumenta el contador de Alives
+            aux+=ALIVE_PERIOD
+        elif(i>=3 and i<203 and recibido ==False):          # EAMASi no recibio un Ack en 20 periodos continuos
+            time.sleep(ALIVE_CONTINUO)                      # EAMA Delay de 0.1 segundos
+            i+=1                                            # EAMA aumenta el contador de Alives
+            aux+=ALIVE_CONTINUO
+        else:                                               # EAMA  en caso de no recibir un Ack en 20 periodos continuos
+            print('\n')
+            logging.critical("No se puede establecer conexion con el servidor.")
+            logging.critical("Saliendo de la Aplicacion...")
+            send = False
+    sys.exit()  # Matamos el hilo
+            
+    #sys.exit()    # EAMA Al utilizarlo el main principal sigue en ejecucion
+"""
+broker=Cliente(False)    # Creamos la instancia brocker del tipo cliente
 
 
 try:
     broker.Suscribe()
-
     AliveTh = threading.Thread(name = 'ALIVE',
                         target = broker.sendALIVE,
                         args = (),
                         daemon = False
                         )
-
     AliveTh.start()
     logging.debug("Iniciando Hilo de Alive")
 
@@ -25,6 +56,7 @@ try:
         if(AliveTh.is_alive()==False):
             sys.exit()
             State=False
+
         print("\n\nEnviar texto")
         print("\t 1 - Enviar a usuario")
         print("\t 2 - Enviar a sala")
@@ -89,7 +121,7 @@ try:
             print("\n [ERROR]Debe ingresar un numero para seleccionar una opcion.")
 except KeyboardInterrupt:
     logging.warning("Desconectando del broker MQTT...")
-
+    sys.exit()
 finally:
     broker.Disconect()
 
