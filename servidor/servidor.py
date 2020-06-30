@@ -12,8 +12,11 @@ try:
     print('\n')
     while True:
         logging.info("Los usuarios activos son: ")
+        print(str(broker.active()))
+        # Verifica si su contador es mayor a cero, de lo contrario lo elimina de la lista
+        print('\n')
         time.sleep(6)
-
+        # Reinicia el contador de alives de los cientes
 
 except KeyboardInterrupt:
     logging.warning("Desconectando del broker...")

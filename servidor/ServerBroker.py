@@ -12,12 +12,14 @@ import os                       # Ejecutar comandos de terminal
 ###########################################################################################################
 #               EAMA Configuracion Broker
 logging.basicConfig(    #Configuracion inicial de logging
-    level = logging.DEBUG,   #INFO
+    level = logging.INFO,   #INFO
     format = '[%(levelname)s] %(message)s'
     )
 
 class Servidor(object):
     def __init__(self):                                     # LFMV Configuracion inicial del cliente
+        users=[]
+        self.users = users                                  # EAMA Lista que contiene los usuarios activos
         self.client = mqtt.Client(clean_session=True)            # LFMV Nueva instancia de cliente
         self.client.on_connect = self.on_connect                      # LFMV Se configura la funcion "Handler" cuando suceda la conexion
         self.client.on_message = self.on_message                      # LFMV Se configura la funcion "Handler" que se activa al llegar un mensaje a un topic subscrito
@@ -59,21 +61,47 @@ class Servidor(object):
     def publishData(self,topic, value, retain = False): # LFMV Funcion para publicar 
         self.client.publish(topic, value, QoS, retain)       # LFMV Publica el topic con las caracteristicas indicadas
     
-    def on_message(self,client, userdata, msg):  #Callback que se ejecuta cuando llega un mensaje al topic suscrito
-        mensaje=msg.payload.split("$".encode("utf-8"))  # Se divide la informacion por el caracter especial
-        if(mensaje[0]==ALIVE):                      # Recibe en la trama un ALIVE
-            mensaje[1]=mensaje[1].decode("utf-8")   # Codifica el mensje a modo que pueda ser interpretdo
-            logging.debug("Ha llegado el mensaje al topic: " + str(msg.topic))  # Indica el topic del que llego
-            logging.debug("ALIVE recibido de: " + mensaje[1])                   # Indica la instruccion recibida
+    def on_message(self,client, userdata, msg):         # LFMVCallback que se ejecuta cuando llega un mensaje al topic suscrito
+        mensaje=msg.payload.split("$".encode("utf-8"))  # EAMA Se divide la informacion por el caracter especial
+        if(mensaje[0]==ALIVE):                          # EAMA Recibe en la trama un ALIVE
+            mensaje[1]=mensaje[1].decode("utf-8")       # EAMA Codifica el mensje a modo que pueda ser interpretdo
+            logging.debug("Ha llegado el mensaje al topic: " + str(msg.topic))  # EAMA Indica el topic del que llego
+            logging.debug("ALIVE recibido de: " + mensaje[1])                   # EAMA Indica la instruccion recibida
             
-            topic = "comandos/"+str(Grupo)+"/"+mensaje[1]    # Topic para enviar ACK de respuesta
-            payload = ACK+b'$'+mensaje[1].encode("utf-8")  
-
-            self.publishData(topic,payload)
-            logging.info('Mensaje enviado')
+            topic = "comandos/"+str(Grupo)+"/"+mensaje[1]   # EAMA Topic para enviar ACK de respuesta
+            payload = ACK+b'$'+mensaje[1].encode("utf-8")   # EAMA Concatena el payload indicando el ACK 
+            self.publishData(topic,payload)                 # EAMA Publica el mensaje de respuesta
+            logging.debug('Mensaje enviado')                # Indica que se envio el mensaje
+            self.agregarusuario(mensaje[1])                 # Agrega el usuario a la lista
             #Se almacena el usuario recibido en el archivo 
-            logCommand = 'echo "(' + str(msg.topic) + ') -> ' + mensaje[1] + '" >> ' + LOG_FILENAME
-            os.system(logCommand)
+            #logCommand = 'echo "(' + str(msg.topic) + ') -> ' + mensaje[1] + '" >> ' + LOG_FILENAME
+            #os.system(logCommand)
+
+    def agregarusuario(self,usuario):           # Funcion para agregar usuarios activos 
+        if len(self.users)>0:                   # Si hay usuarios en la lista
+            for i in range(len(self.users)):    # Evalua todas las posiciones de la lista
+                if self.users[i][0]==usuario:   # Si el usuario existe aumenta su contador
+                    self.users[i][1]+=1         # Aumenta el contador de pulsoss
+                else:                           # Si el usuario no existe lo agrega a la lista
+                    self.users.append([usuario,0])  # Agrega un usuario nuevo
+        else:                                   # Si tenemos una lista vacia
+            self.users.append([usuario,0])      # Agrega un usuario nuevo
+        
+                
+    def active(self):
+        if len(self.users)>0:                   # Si hay usuarios en la lista
+            active =[]
+            for i in range(len(self.users)):    # Evalua todas las posiciones de la lista
+                if self.users[i][1]==0:         # Si no envio alive
+                    del self.users[i]           # Elimina el usuario de la lista
+            
+            for i in range(len(self.users)):    # Evalua todas las posiciones de la lista
+                self.users[i][1]=0              # Reinicia el contador de pulsoss                
+                active.append(str(self.users[i][0]))    # Si envio pulso lo agrega a la lista
+            return active                       # Regresa la lista con usuarios
+        else:                                   # Si tenemos una lista vacia
+            mensaje = "No hay usuario Activos" 
+            return mensaje     
 
     def on_connect(self,client, userdata, rc):   #Callback que se ejecuta cuando nos conectamos al broker
         logging.info("Conectado al broker")
