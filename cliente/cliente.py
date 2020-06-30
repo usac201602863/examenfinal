@@ -80,10 +80,10 @@ try:
                 topic='usuarios/'+user
                 print('¿Desea enviar su mensaje encriptado?' + '\n' + '1 - Encriptar' + '\n' + '2 - No encriptar')
                 pregunta = str(input('Ingrese su respuesta: '))
-                if (pregunta==1):
-                    mens = bytes(mensaje)           #WAIG Convertimos el mensaje a bytes
-                    encrip_mensaje = crypto.encriptar_mensaje(mensaje)  #WAIG Se toma el mensaje y se encripta 
-                    enc_men_con_indicador = mensaje.decode() + '@S'     #Se le agrega un indicador al mensaje para saber que esta encriptado
+                if (pregunta=='1'):
+                    mens = mensaje.encode("utf-8")           #WAIG Convertimos el mensaje a bytes
+                    encrip_mensaje = crypto.encriptar_mensaje(mens)  #WAIG Se toma el mensaje y se encripta 
+                    enc_men_con_indicador = str(encrip_mensaje.decode()) + '@S'     #WAIG Se le agrega un indicador al mensaje para saber que esta encriptado
                     broker.publishData(topic,enc_men_con_indicador)            #WAIG Se envia el mensaje encriptado
                     print('\n')
                     logging.info("Los datos han sido enviados al usuario")
@@ -99,11 +99,11 @@ try:
                 sala=sala.split("s")
                 topic='salas/'+sala[0]+'/s'+sala[1]
                 print('¿Desea enviar su mensaje encriptado?' + '\n' + '1 - Encriptar' + '\n' + '2 - No encriptar')
-                pregunta = str(input('Ingrese su respuesta: '))
-                if (pregunta==1):
-                    mens = bytes(mensaje)           #WAIG Convertimos el mensaje a bytes
-                    encrip_mensaje = crypto.encriptar_mensaje(mensaje)  #WAIG Se toma el mensaje y se encripta 
-                    enc_men_con_indicador = mensaje.decode() + '@S'     #Se le agrega un indicador al mensaje para saber que esta encriptado
+                pregun = str(input('Ingrese su respuesta: '))
+                if (pregun==1):
+                    mens = mensaje.encode("utf-8")           #WAIG Convertimos el mensaje a bytes
+                    encrip_mensaje = crypto.encriptar_mensaje(mens)  #WAIG Se toma el mensaje y se encripta 
+                    enc_men_con_indicador = str(encrip_mensaje.decode()) + '@S'     #Se le agrega un indicador al mensaje para saber que esta encriptado
                     broker.publishData(topic,enc_men_con_indicador)            #WAIG Se envia el mensaje encriptado
                     print('\n')
                     logging.info("Los datos han sido enviados a la sala")
@@ -127,7 +127,7 @@ try:
                         audio = str(datetime.datetime.now().ctime())    # Nombre de audio con timestamp
                         audio=audio.replace(" ","_")  # Eliminando espacios del nombre
                         grabar(audio,d)
-                        print('¿Desea enviar su audio encriptado?' + '\n' + '1 - Encriptar' + '\n' + '2 - No encriptar')
+                        logging.info('¿Desea enviar su audio encriptado?' + '\n' + '1 - Encriptar' + '\n' + '2 - No encriptar')
                         pregunta = str(input('Ingrese su respuesta: '))
                         if (pregunta == 1):                                 #WAIG Si es que se desea encriptar el auido
                             audio_a_encriptar = audio + '.wav'              #Se aguarda el nombre del audio grabado en una variable

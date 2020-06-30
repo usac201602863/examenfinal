@@ -116,14 +116,15 @@ class Cliente(object):
         else:   # En caso de ser un mensaje normal
             menm = str(msg.payload)                                                    #WAIG Se convierte en string el mensaje
             partir_mensaje = menm.split('@')                                           #WAIG Se separa el indicador del mensaje
-            parte_B = partir_mensaje[1]                                                #WAIG Se extrae el indicador 
+            parte_B = str(partir_mensaje[1])
 
-            if (parte_B == 'S'):                                                       #WAIG Se evalua el indicar
-                parteA_binaria = partir_mensaje[0].encode("utf-8")                     #WAIG Se convierte el mensaje a binario para su desencriptacion
-                mensaje_binario = crypto.desencriptar_mensaje(parteA_binaria)          #WAIG Se desencripta el mensaje
-                topic_recibido = 'Mensaje entrante del topic ' + str(msg.topic) + ': '
-                logging.info(topic_recibido)
-                logging.info("El contenido del mensaje es: " + str(mensaje_binario.decode("utf-8"))) #LFMV Muestra el mensaje de texto recibido
+            if (parte_B == "S'"):                                                       #WAIG Se evalua el indicar
+                topic_recibido = 'Mensaje encriptado entrante del topic ' + str(msg.topic) + ': '
+                logging.info(topic_recibido)                                                       #WAIG Se evalua el indicar 
+                parteA_binaria = partir_mensaje[0]                   #WAIG Se convierte el mensaje a binario para su desencriptacion
+                logging.info("El mensaje encriptado es:" + str(parteA_binaria) + '\n')
+                mensaje_binario = crypto.desencriptar_mensaje(parteA_binaria.encode("utf-8"))          #WAIG Se desencripta el mensaje
+                logging.info("El contenido del mensaje es: " + str(mensaje_binario)) #LFMV Muestra el mensaje de texto recibido
             else:
                 parte_A = partir_mensaje[0]                                            #WAIG Se extrae la parte del mensaje
                 topic_recibido = 'Mensaje entrante del topic ' + str(msg.topic) + ': '
