@@ -9,6 +9,7 @@ import logging                  # Logging
 import time                     # Retardos
 import sys                      # Requerido para salir (sys.exit())
 import os                       # Ejecutar comandos de terminal
+import socket                   # Libreria TCP
 ###########################################################################################################
 #               EAMA Configuracion Broker
 logging.basicConfig(    #Configuracion inicial de logging
@@ -26,6 +27,7 @@ class Servidor(object):
         self.client.on_publish = self.on_publish                      # LFMV Se configura la funcion "Handler" que se activa al publicar algo
         self.client.username_pw_set(MQTT_USER, MQTT_PASS)        # LFMV Credenciales requeridas por el broker
         self.client.connect(host=MQTT_HOST, port = MQTT_PORT)    # LFMV Conectar al servidor remoto
+        self.TCPConfig(SERVER, TCP_PORT)                           #LFMV Credenciales requeridas por el sockect TCP
         logging.info("Conexion exitosa cliente MQTT")       # LFMV Mensaje inicial 
 
     def Suscribe(self):
@@ -109,6 +111,33 @@ class Servidor(object):
     def on_publish(self,client, userdata, mid):          # Handler si se publica satisfactoriamente
         publishText = "Publicacion satisfactoria."
         logging.debug(publishText)
+
+    def TCPConfig(self, IP_ADDR, TCP_PORT):         #LFMV configuracion del socket
+        TCP_server = socket.socket()
+        TCP_server.bind(('',TCP_PORT))              #LFMV Se colocan los parametros del Socket
+        TCP_server.listen(10)
+        self.socket = socket
+        self.TCP_server = TCP_server
+        self.IP_ADDR = IP_ADDR
+        self.TCP_PORT = TCP_PORT
+
+        logging.debug('OBJETO TCP_SERVIDOR(SOCKET) CREADO')
+    def recibir(self):                          #LFMV funcion de recibir
+        conn, addr = TCP_server.accept()
+        buff = conn.recv(BUFFER_SIZE)
+        archivo = open('audio_ser.wav', 'wb')       #LFMV Aca se guarda el archivo entrante
+        while buff:
+            archivo.write(buff)
+            buff = conn.recv(BUFFER_SIZE)           #LFMV Los bloques se van agregando al archivo
+        archivo.close()                             #LFMV Se cierra el archivo
+        logging.info("Recepcion de archivo finalizada")
+    def enviar(self):                               #LFMV funcion para recibir
+        conn, addr = TCP_server.accept()    
+        with open('audio_ser.wav', 'rb') as f:       #LFMV Se abre el archivo a enviar en BINARIO
+            conn.sendfile(f, 0)
+            f.close()
+        conn.close()
+        logging.info("\n\nArchivo enviado a: ", addr)
 
 ###########################################################################################################
 

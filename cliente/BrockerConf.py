@@ -10,6 +10,7 @@ import logging                      # Logging
 import time                         # Retardos
 import sys                          # Requerido para salir (sys.exit())
 import os                           # Ejecutar comandos de terminal
+import socket                       # Libreria TCP
 #########################################################################################################
 logging.basicConfig(                            #EAMA Configuracion inicial para logging.
     level = logging.INFO,                      #  logging.DEBUG muestra todo. ############## cambiar antes de entrega a .info
@@ -28,8 +29,11 @@ class Cliente(object):
         self.client.on_publish = self.on_publish                      # LFMV Se configura la funcion "Handler" que se activa al publicar algo
         self.client.username_pw_set(MQTT_USER, MQTT_PASS)        # LFMV Credenciales requeridas por el broker
         self.client.connect(host=MQTT_HOST, port = MQTT_PORT)    # LFMV Conectar al servidor remoto
+        self.IP_ADDR = SERVER                               #LFMV credenciales para el cliente TCP
+        self.TCP_P = TCP_PORT                               #LFMV   credenciales para el cliente TCP
         logging.debug(self.recibido)
         logging.info("Conexion exitosa cliente MQTT")       # LFMV Mensaje inicial
+
         
     def Suscribe(self):
         for i in range(len(self.Documento(SALAS))):             # WAIG Subscripcion a salas (topic,qos)
@@ -142,7 +146,30 @@ class Cliente(object):
         archivo.close()                         # WAIG Cerrar el archivo al finalizar
         return datos                            # WAIG Se regresa una lista con los archivos
 
+    def TCP_Client(self, IP_ADDR, TCP_P):           #LFMV Configuracion del socket
+        self.sock = socket.socket()
+        self.sock.connect((self.IP_ADDR, self.TCP_P))
 
+    def recibir(self):                                  #LFMV funcion para recibir
+        self.TCP_Client(self.IP_ADRR,self.TCP_P)        #LFMV Conecta el servidor
+        buff = sock.recv(BUFFER_SIZE)                   
+        archivo = open('recibido_cl.wav', 'wb')         #LFMV Aca se guarda el archivo entrante
+
+        while buff:
+            archivo.write(buff)
+            buff = sock.recv(BUFFER_SIZE)               #LFMV Los bloques se van agregando al archivo
+
+        archivo.close()                                 #LFMV Se cierra el archivo
+
+        logging.info("Recepcion de archivo finalizada")
+
+    def enviar(self,name):                                   #LFMV funcion para enviar
+        self.TCP_Client(self.IP_ADDR,self.TCP_P)
+        with open(name+'.wav', 'rb') as f:                   #LFMV Se abre el archivo a enviar en BINARIO
+            sock.sendfile(f, 0)                 
+            f.close()
+        sock.close()
+        logging.info("\n\nArchivo enviado")
 ##########################################################################################################
 
 #               Configuracion HILOS
