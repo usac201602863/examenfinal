@@ -37,6 +37,10 @@ def sendALIVE(recibido=False, retain = False):              # EAMA Funcion para 
 """
 broker=Cliente(False)    # Creamos la instancia brocker del tipo cliente
 
+  
+key = b'wrQbm1d3INyVeLYEkcgHUe9X6J2QWXNl9EQw7eeo_qg='   #Definimos la llave para desemcriptar
+crypto = endescrip(key)                                 #Mandamos la llave a la clase endescrip
+    
 
 try:
     broker.Suscribe()
@@ -52,6 +56,7 @@ try:
     #publishData("test","Mensaje Inicial pr80")
     #logging.info("Los datos han sido enviados al broker")            
     #time.sleep(DEFAULT_DELAY)   # Retardo hasta la proxima publicacion de info
+  
     while(State):
         if(AliveTh.is_alive()==False):
             sys.exit()
@@ -71,19 +76,43 @@ try:
             opcion=int(opcion)
             if(opcion==1):  # Enviar texto a usuario
                 user = str(input('Ingrese usuario: '))          # Realizar excepciones para usuario
-                mensaje=str(input('Ingrese mensaje a enviar: '))
+                mensaje=str(input('Ingrese mensaje a enviar: '))    
                 topic='usuarios/'+user
-                broker.publishData(topic,mensaje)
-                print('\n')
-                logging.info("Los datos han sido enviados al usuario") 
+                print('¿Desea enviar su mensaje encriptado?' + '\n' + '1 - Encriptar' + '\n' + '2 - No encriptar')
+                pregunta = str(input('Ingrese su respuesta: '))
+                if (pregunta==1):
+                    mens = bytes(mensaje)           #WAIG Convertimos el mensaje a bytes
+                    encrip_mensaje = crypto.encriptar_mensaje(mensaje)  #WAIG Se toma el mensaje y se encripta 
+                    enc_men_con_indicador = mensaje.decode() + '@S'     #Se le agrega un indicador al mensaje para saber que esta encriptado
+                    broker.publishData(topic,enc_men_con_indicador)            #WAIG Se envia el mensaje encriptado
+                    print('\n')
+                    logging.info("Los datos han sido enviados al usuario")
+                else:
+                    men_con_indicador = mensaje + '@N'      #Se le agrega un indicador al mensaje para saber que no esta encriptado
+                    broker.publishData(topic,men_con_indicador)
+                    print('\n')
+                    logging.info("Los datos han sido enviados al usuario") 
+
             elif(opcion==2):    # Enviar texto a sala
                 sala = str(input('Ingrese sala: '))             # Realizar excepciones para sala
                 mensaje=str(input('Ingrese mensaje a enviar: '))
                 sala=sala.split("s")
                 topic='salas/'+sala[0]+'/s'+sala[1]
-                broker.publishData(topic,mensaje)
-                print('\n')
-                logging.info("Los datos han sido enviados a la sala") 
+                print('¿Desea enviar su mensaje encriptado?' + '\n' + '1 - Encriptar' + '\n' + '2 - No encriptar')
+                pregunta = str(input('Ingrese su respuesta: '))
+                if (pregunta==1):
+                    mens = bytes(mensaje)           #WAIG Convertimos el mensaje a bytes
+                    encrip_mensaje = crypto.encriptar_mensaje(mensaje)  #WAIG Se toma el mensaje y se encripta 
+                    enc_men_con_indicador = mensaje.decode() + '@S'     #Se le agrega un indicador al mensaje para saber que esta encriptado
+                    broker.publishData(topic,enc_men_con_indicador)            #WAIG Se envia el mensaje encriptado
+                    print('\n')
+                    logging.info("Los datos han sido enviados a la sala")
+                else:
+                    men_con_indicador = mensaje + '@N'      #Se le agrega un indicador al mensaje para saber que no esta encriptado
+                    broker.publishData(topic,men_con_indicador)
+                    print('\n')
+                    logging.info("Los datos han sido enviados a la sala") 
+
             elif(opcion==3):    # Enviar voz a usuario
                 # Selecciona usuario a publicar
                 # Ingresa duracion del audio
@@ -98,7 +127,13 @@ try:
                         audio = str(datetime.datetime.now().ctime())    # Nombre de audio con timestamp
                         audio=audio.replace(" ","_")  # Eliminando espacios del nombre
                         grabar(audio,d)
-                        reproducir(audio,d)
+                        print('¿Desea enviar su audio encriptado?' + '\n' + '1 - Encriptar' + '\n' + '2 - No encriptar')
+                        pregunta = str(input('Ingrese su respuesta: '))
+                        if (pregunta == 1):                                 #WAIG Si es que se desea encriptar el auido
+                            audio_a_encriptar = audio + '.wav'              #Se aguarda el nombre del audio grabado en una variable
+                            crypto.encriptar_archivo(audio_a_encriptar)     #Se encripta el audio enviando el nombre del audio grabado
+                        else:                                               #WAIG Si no se desea encriptar el audio
+                            reproducir(audio,d)
                     else:
                         logging.error('El mensaje no debe ser mayor a 30 segundos')
                 else:

@@ -1,19 +1,23 @@
 # Librerias utilizadas
-from configuracion import*      # EAMA Constantes de configuracion
-from brokerData import *        # EAMA Informacion de la conexion
-import paho.mqtt.client as mqtt # Libreria MQTT
-import threading                # Concurrencia con hilos
-import datetime                 # Para generar fecha/hora actual
-import binascii                 # Conversion con binarios/ascii
-import logging                  # Logging
-import time                     # Retardos
-import sys                      # Requerido para salir (sys.exit())
-import os                       # Ejecutar comandos de terminal
+from configuracion import*          # EAMA Constantes de configuracion
+from brokerData import *            # EAMA Informacion de la conexion
+from endescriptado_clase import *   # WAIG Encriptado y desencriptado
+import paho.mqtt.client as mqtt     # Libreria MQTT
+import threading                    # Concurrencia con hilos
+import datetime                     # Para generar fecha/hora actual
+import binascii                     # Conversion con binarios/ascii
+import logging                      # Logging
+import time                         # Retardos
+import sys                          # Requerido para salir (sys.exit())
+import os                           # Ejecutar comandos de terminal
 #########################################################################################################
 logging.basicConfig(                            #EAMA Configuracion inicial para logging.
     level = logging.INFO,                      #  logging.DEBUG muestra todo. ############## cambiar antes de entrega a .info
     format = '[%(levelname)s] %(message)s'
     )
+
+key = b'wrQbm1d3INyVeLYEkcgHUe9X6J2QWXNl9EQw7eeo_qg='   #WAIG Definimos la llave para desemcriptar
+crypto = endescrip(key)                                 #WAIG Enviamos la llave a la clase y definimos cripto como clase endescrip
 
 class Cliente(object):
     def __init__(self,recibido):# LFMV Configuracion inicial del cliente
@@ -106,10 +110,21 @@ class Cliente(object):
                 logging.debug(str(msg.payload)) 
                 self.recibido=True
         else:   # En caso de ser un mensaje normal
-            menm = str(msg.payload)
-            topic_recibido = 'Mensaje entrante del topic ' + str(msg.topic) + ': '
-            logging.info(topic_recibido)
-            logging.info("El contenido del mensaje es: " + str(msg.payload.decode("utf-8"))) #LFMV Muestra el mensaje de texto recibido
+            menm = str(msg.payload)                                                    #WAIG Se convierte en string el mensaje
+            partir_mensaje = menm.split('@')                                           #WAIG Se separa el indicador del mensaje
+            parte_B = partir_mensaje[1]                                                #WAIG Se extrae el indicador 
+
+            if (parte_B == 'S'):                                                       #WAIG Se evalua el indicar
+                parteA_binaria = partir_mensaje[0].encode("utf-8")                     #WAIG Se convierte el mensaje a binario para su desencriptacion
+                mensaje_binario = crypto.desencriptar_mensaje(parteA_binaria)          #WAIG Se desencripta el mensaje
+                topic_recibido = 'Mensaje entrante del topic ' + str(msg.topic) + ': '
+                logging.info(topic_recibido)
+                logging.info("El contenido del mensaje es: " + str(mensaje_binario.decode("utf-8"))) #LFMV Muestra el mensaje de texto recibido
+            else:
+                parte_A = partir_mensaje[0]                                            #WAIG Se extrae la parte del mensaje
+                topic_recibido = 'Mensaje entrante del topic ' + str(msg.topic) + ': '
+                logging.info(topic_recibido)
+                logging.info("El contenido del mensaje es: " + str(parte_A))            #LFMV Muestra el mensaje de texto recibido
 
     
     def sendFTR(Filsize, retain = False):                                           # LFMV Funcion para enviar archivo
